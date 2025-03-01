@@ -1,7 +1,10 @@
 
-import {ASTRA_CLIENT_SECRET, ASTRA_CLIENT_TOKEN, ASTRA_DB_API_URL, ASTRA_CLIENT_ID} from "./config";
+import {ASTRA_CLIENT_SECRET, ASTRA_CLIENT_TOKEN} from "./config";
 const CLIENT_SECRET = ASTRA_CLIENT_SECRET;
 const TOKEN = ASTRA_CLIENT_TOKEN;
+ASTRA_DB_API_URL = "https://f722fd26-2185-4cc8-9c80-f9b688941ccd-us-east-2.apps.astra.datastax.com";
+ASTRA_CLIENT_ID = "FFfQKkniZxbWCjTiKygjNsmI";
+
 const NAMESPACE = "default_keyspace"; //"hack1";
 const COLLECTION = "collection1_nvidia_emb"; // Replace with your collection name
 
