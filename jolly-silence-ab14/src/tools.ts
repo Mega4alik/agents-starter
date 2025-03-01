@@ -4,12 +4,14 @@
  */
 import { tool } from "ai";
 import { z } from "zod";
-
 import { agentContext } from "./server";
 
-
 import  axios  from "axios";
-async function fetchData() {
+
+
+
+
+async function fetchData(): Promise<any> {
   try {
     const response = await axios.get("http://localhost:3104/api/generate_payment_link", {
       params: {
@@ -17,8 +19,22 @@ async function fetchData() {
         amount:"2.5"
       },
     });
-
     console.log("Response Data:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+  }
+}
+
+
+async function zendeskCreateTicket(params): Promise<any>{
+  try {
+    const response = await axios.get("http://localhost:3104/zendesk/tickets/add", {
+      params: params,
+      headers: {"username": "erasyl@webapi.ai", "token": "tFBsV86fHJojwhz8hM9rLepP8XewjtmhDzPOO8Ea", "remoteUri": "https://eradevsupport.zendesk.com/api/v2"}
+    });
+    console.log("Response Data:", response.data);
+    return response.data;
   } catch (error) {
     console.error("Error fetching data:", error);
   }
@@ -65,9 +81,10 @@ const getOrderDetails = tool({
 
 
 const createTicket = tool({
-  description: "Proceed and create a ticket only if balance is positive",
-  parameters: z.object({ address: z.string(), problem_description: z.string()}),
+  description: "Proceed and create a ticket only if balance is positive and user is already authorized",
+  parameters: z.object({ phone: z.string(), address: z.string(), problem_description: z.string()}),
   execute: async ({ address, problem_description }) => {
+    var name = 'Anuar Sharafudinov'; //preauthorized
     console.log(`createTicket: ${address}, ${problem_description}`);
     return "Ticket created";
   },
@@ -79,7 +96,12 @@ const checkBalance = tool({
   parameters: z.object({ code: z.string() }),
   execute: async ({ code }) => {
     console.log(`checkBalance. code: ${code}`);
-    return "You have a positive balance. Would you like to proceed?";
+    if (code == 444){
+      const data = await fetchData();
+      console.log("checkBalance.data:", data);
+      return "Pay your amount here - "+data.url;
+    }
+    else return "You have a positive balance. Would you like to proceed?";
   },
 });
 
@@ -88,8 +110,8 @@ const Authorize = tool({
   description: "for all user related actions, authorize the user by phone number first",
   parameters: z.object({ phone: z.string() }) ,
   execute: async ({ phone }) => {
-    console.log(`user phone: ${phone}`);    
-    fetchData();
+    console.log(`user phone: ${phone}`);
+    zendeskCreateTicket({name:"Anuar", problem_description:"tv not working", phone:phone});
     //need to send a code
     return "We sent you a code, please provide it";
   },
