@@ -21,7 +21,7 @@
     "@cloudflare/vitest-pool-workers": "^0.7.4",
     "@cloudflare/workers-types": "^4.20250224.0",
     "@tailwindcss/vite": "^4.0.9",
-    "@types/node": "^22.13.5",
+    "@types/node": "^22.13.8",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.3.4",
@@ -36,8 +36,10 @@
     "@ai-sdk/react": "^1.1.18",
     "agents-sdk": "^0.0.22",
     "ai": "^4.1.46",
+    "axios": "^1.8.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "stripe": "^17.7.0",
     "zod": "^3.24.2"
   }
 }
