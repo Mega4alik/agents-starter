@@ -5,13 +5,41 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { agentContext } from "./server";
-
 import  axios  from "axios";
+import {ZENDESK_TOKEN, accountSid, authToken} from "./config";
+
+// Twilio 
+//import { sendSMS } from "./twilio"; // Import function
+const twilioNumber = "+12722055617";
+
+async function sendOTP(to: string, otp: string): Promise<void> {
+  const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
+  const data = new URLSearchParams();
+  data.append("Body", `Your verification code is ${otp}`);
+  data.append("From", twilioNumber);
+  data.append("To", to);
+
+  try {
+    const response = await axios.post(url, data, {
+      auth: {
+        username: accountSid,
+        password: authToken,
+      },
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    });
+
+    console.log(`OTP sent! Message SID: ${response.data.sid}, code: ${otp}`);
+
+  } catch (error) {
+    console.error("Failed to send OTP:", error.response?.data || error.message);
+  }
+  return true;
+} 
 
 
 
 
-async function fetchData(): Promise<any> {
+async function createPaymentLink(): Promise<any> {
   try {
     const response = await axios.get("http://localhost:3104/api/generate_payment_link", {
       params: {
@@ -31,7 +59,7 @@ async function zendeskCreateTicket(params): Promise<any>{
   try {
     const response = await axios.get("http://localhost:3104/zendesk/tickets/add", {
       params: params,
-      headers: {"username": "erasyl@webapi.ai", "token": "tFBsV86fHJojwhz8hM9rLepP8XewjtmhDzPOO8Ea", "remoteUri": "https://eradevsupport.zendesk.com/api/v2"}
+      headers: {"username": "erasyl@webapi.ai", "token": ZENDESK_TOKEN, "remoteUri": "https://eradevsupport.zendesk.com/api/v2"}
     });
     console.log("Response Data:", response.data);
     return response.data;
@@ -39,8 +67,6 @@ async function zendeskCreateTicket(params): Promise<any>{
     console.error("Error fetching data:", error);
   }
 }
-
-
 
 
 /**
@@ -83,9 +109,11 @@ const getOrderDetails = tool({
 const createTicket = tool({
   description: "Proceed and create a ticket only if balance is positive and user is already authorized",
   parameters: z.object({ phone: z.string(), address: z.string(), problem_description: z.string()}),
-  execute: async ({ address, problem_description }) => {
+  execute: async ({ phone, address, problem_description }) => {
     var name = 'Anuar Sharafudinov'; //preauthorized
-    console.log(`createTicket: ${address}, ${problem_description}`);
+    var params = {name:name, phone:phone, address:address, problem_description:problem_description};
+    console.log("Creating a ticket..", params);    
+    zendeskCreateTicket(params);
     return "Ticket created";
   },
 });
@@ -96,8 +124,8 @@ const checkBalance = tool({
   parameters: z.object({ code: z.string() }),
   execute: async ({ code }) => {
     console.log(`checkBalance. code: ${code}`);
-    if (code == 444){
-      const data = await fetchData();
+    if (code == 4444){
+      const data = await createPaymentLink();
       console.log("checkBalance.data:", data);
       return "Pay your amount here - "+data.url;
     }
@@ -107,12 +135,11 @@ const checkBalance = tool({
 
 
 const Authorize = tool({
-  description: "for all user related actions, authorize the user by phone number first",
+  description: "for all user related questions/issues, authorize the user by phone number first. Only ask phone number, no more questions before authorized.",
   parameters: z.object({ phone: z.string() }) ,
   execute: async ({ phone }) => {
     console.log(`user phone: ${phone}`);
-    zendeskCreateTicket({name:"Anuar", problem_description:"tv not working", phone:phone});
-    //need to send a code
+    sendOTP(phone, "2244");    
     return "We sent you a code, please provide it";
   },
 });
